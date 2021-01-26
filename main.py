@@ -14,10 +14,9 @@ def main() :
 
     sg.theme('DarkAmber')   # Add a touch of color
     # All the stuff inside your window.
-    layout = [  [sg.Text('coinList'),sg.Text('currencyChoiceList'), sg.Button('addCoinToTicker') ],
-                [sg.Text('Coin 1 :'), sg.Text('coinAbbrevName'), sg.Text('smallGraphOfCoinEvolution')],
-                [sg.Text('', size=(22,1), key='output')],
-                [sg.Button('Ok'), sg.Button('Cancel')] ]
+    layout = [  #[sg.Text('coinList'),sg.Text('currencyChoiceList'), sg.Button('addCoinToTicker') ],
+                #[sg.Text('Bitcoin :'), sg.Text('coinAbbrevName'), sg.Text('smallGraphOfCoinEvolution')],
+                [sg.Text('', size=(22,1), key='output'), sg.Button('x')]]
 
     # Create the Window
     window = sg.Window('cryptoWidgetX', layout,
@@ -35,7 +34,7 @@ def main() :
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
         event, values = window.read()
-        if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
+        if event == sg.WIN_CLOSED or event == 'x': # if user closes window or clicks cancel
             rt.stop()
             break
         print('You entered ', values[0])
