@@ -4,7 +4,7 @@ import requests
 import json
 from RepeatedTimer import RepeatedTimer
 
-URL = "https://api.coinbase.com/v2/prices/spot?currency=CAD"
+URL = "https://api.binance.com/api/v3/avgPrice?symbol=BTCBUSD"
 
 BTCval = ''
 
@@ -43,7 +43,7 @@ def main() :
 
 def scheduleTask():
     global BTCval
-    rt = RepeatedTimer(60, tikBTC)
+    rt = RepeatedTimer(1, tikBTC)
     return rt
 
 def tikBTC():
@@ -56,9 +56,27 @@ def tikBTC():
 
     print(response.text)
 
-    BTCval = json.loads(response.text)['data']
-    textToShow = BTCval['base'] + ': ' + BTCval['amount'] + '$ ' + BTCval['currency']
+    us_val = float(json.loads(tikCAD2USD())['rates']['USD'])
+    
+
+    BTCval = float(json.loads(response.text)['price'])
+
+    VALUE = BTCval*(1/us_val)
+
+    #textToShow = BTCval['base'] + ': ' + BTCval['amount'] + '$ ' + BTCval['currency']
+    textToShow = 'BTC: ' + str(VALUE) + '$ CAD'
     window['output'].update(textToShow)   
 
+def tikCAD2USD():
+    url = "https://api.exchangeratesapi.io/latest?base=CAD&symbols=USD"
+
+    payload={}
+    headers = {}
+
+    response = requests.request("GET", url, headers=headers, data=payload)
+    return response.text
+
+def convert(price, baseCurr, foreignCurr) :
+    return price*(baseCurr/foreignCurr)
 
 main()
