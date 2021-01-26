@@ -4,9 +4,9 @@ import requests
 import json
 from RepeatedTimer import RepeatedTimer
 
-URL = "https://api.binance.com/api/v3/avgPrice?symbol=BTCBUSD"
-
 BTCval = ''
+bitcoin = 'BTCBUSD'
+ada = 'ADABUSD'
 
 def main() :
     global BTCval
@@ -16,7 +16,8 @@ def main() :
     # All the stuff inside your window.
     layout = [  #[sg.Text('coinList'),sg.Text('currencyChoiceList'), sg.Button('addCoinToTicker') ],
                 #[sg.Text('Bitcoin :'), sg.Text('coinAbbrevName'), sg.Text('smallGraphOfCoinEvolution')],
-                [sg.Text('', size=(22,1), key='output'), sg.Button('x')]]
+                [sg.Text('', size=(22,1), key='BTC_output')],
+                [sg.Text('', size=(22,1), key='ADA_output'), sg.Button('x')]]
 
     # Create the Window
     window = sg.Window('cryptoWidgetX', layout,
@@ -49,23 +50,26 @@ def scheduleTask():
 def tikBTC():
     global BTCval
     global window
-    
-    payload={}
-    headers = {}
-    response = requests.request("GET", URL, headers=headers, data=payload)
 
-    print(response.text)
+    responseBitcoin = tikBinance(bitcoin)
+    responseAda = tikBinance(ada)
+
+    print(responseBitcoin.text)
+    print(responseAda.text)
 
     us_val = float(json.loads(tikCAD2USD())['rates']['USD'])
-    
 
-    BTCval = float(json.loads(response.text)['price'])
+    BTCval = float(json.loads(responseBitcoin.text)['price'])
+    ADAval = float(json.loads(responseAda.text)['price'])
 
-    VALUE = BTCval*(1/us_val)
+    BTC_VALUE = BTCval*(1/us_val)
+    ADA_VALUE = ADAval*(1/us_val)
 
     #textToShow = BTCval['base'] + ': ' + BTCval['amount'] + '$ ' + BTCval['currency']
-    textToShow = 'BTC: ' + str(VALUE) + '$ CAD'
-    window['output'].update(textToShow)   
+    btcTextToShow = 'BTC: ' + str(BTC_VALUE) + '$ CAD'
+    adaTextToShow = 'ADA: ' + str(ADA_VALUE) + '$ CAD'
+    window['BTC_output'].update(btcTextToShow)   
+    window['ADA_output'].update(adaTextToShow)
 
 def tikCAD2USD():
     url = "https://api.exchangeratesapi.io/latest?base=CAD&symbols=USD"
@@ -78,5 +82,13 @@ def tikCAD2USD():
 
 def convert(price, baseCurr, foreignCurr) :
     return price*(baseCurr/foreignCurr)
+
+def tikBinance(currency):
+    URL = "https://api.binance.com/api/v3/avgPrice?symbol="
+    
+    payload={}
+    headers = {}
+    response = requests.request("GET", URL+currency, headers=headers, data=payload)
+    return response
 
 main()
