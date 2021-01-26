@@ -43,7 +43,7 @@ def main() :
 
 def scheduleTask():
     global BTCval
-    rt = RepeatedTimer(1, tikBTC)
+    rt = RepeatedTimer(3, tikBTC)
     return rt
 
 def tikBTC():
