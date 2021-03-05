@@ -4,20 +4,16 @@ import requests
 import json
 from RepeatedTimer import RepeatedTimer
 
-BTCval = ''
-bitcoin = 'BTCBUSD'
-ada = 'ADABUSD'
-
 def main() :
-    global BTCval
     global window
-
     sg.theme('DarkAmber')   # Add a touch of color
+
+    rowsCurrencies = ['BTCBUSD','ADABUSD']
+
     # All the stuff inside your window.
-    layout = [  #[sg.Text('coinList'),sg.Text('currencyChoiceList'), sg.Button('addCoinToTicker') ],
-                #[sg.Text('Bitcoin :'), sg.Text('coinAbbrevName'), sg.Text('smallGraphOfCoinEvolution')],
-                [sg.Text('', size=(22,1), key='BTC_output')],
-                [sg.Text('', size=(22,1), key='ADA_output'), sg.Button('x')]]
+    layout = [  *[[sg.Text('', size=(22,1), key=curr+'_output' )] for curr in rowsCurrencies],
+                [sg.InputText()],
+                [sg.Button('add', key='add'), sg.Button('exit')]]
 
     # Create the Window
     window = sg.Window('cryptoWidgetX', layout,
@@ -29,47 +25,68 @@ def main() :
             margins=(0,0),
             finalize=True)
 
-    tikBTC()
-    rt = scheduleTask()
+    # number of buttons to add
+    rows_number = 0
+
+    tikBTC(rowsCurrencies.copy())
+
+    rt = scheduleTask(rowsCurrencies.copy(), window)
 
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
         event, values = window.read()
-        if event == sg.WIN_CLOSED or event == 'x': # if user closes window or clicks cancel
+        if event == sg.WIN_CLOSED or event == 'exit': # if user closes window or clicks cancel
             rt.stop()
             break
-        print('You entered ', values[0])
+        if event == 'add':
+            
+            rt.stop()
 
+            rowsCurrencies.append(values[0])
+
+            rows_number += 1
+
+            layout = [*[[sg.Text('', size=(22,1), key=curr+'_output' )] for curr in rowsCurrencies],
+                      [sg.Button('add', key='add'), sg.Button('exit')]]
+
+            window1 = sg.Window('cryptoWidgetX', layout,
+                                location=window.CurrentLocation(),
+                                no_titlebar=True,
+                                grab_anywhere=True,
+                                keep_on_top=True,
+                                background_color='white',
+                                alpha_channel=.6,
+                                margins=(0,0),
+                                finalize=True)
+
+            rt = RepeatedTimer(3, tikBTC, rowsCurrencies)
+
+            window.Close()
+            window = window1
     window.close()
 
-def scheduleTask():
-    global BTCval
-    rt = RepeatedTimer(3, tikBTC)
+def scheduleTask(currencies, window):
+    rt = RepeatedTimer(3, tikBTC, currencies)
     return rt
 
-def tikBTC():
-    global BTCval
+def tikBTC(currencies):
     global window
 
-    responseBitcoin = tikBinance(bitcoin)
-    responseAda = tikBinance(ada)
+    print(currencies)
 
-    print(responseBitcoin.text)
-    print(responseAda.text)
+    partial_results = (tikBinance(curr) for curr in currencies)
 
     us_val = float(json.loads(tikCAD2USD())['rates']['USD'])
 
-    BTCval = float(json.loads(responseBitcoin.text)['price'])
-    ADAval = float(json.loads(responseAda.text)['price'])
+    results = (float(json.loads(currency_response.text)['price'])*(1/us_val) 
+                for currency_response in partial_results)
 
-    BTC_VALUE = BTCval*(1/us_val)
-    ADA_VALUE = ADAval*(1/us_val)
+    textsToShow = ((curr[0:3] + " " + str(result)[0:8] + " " + '$ CAD') for curr,result in zip(currencies, results))
 
-    #textToShow = BTCval['base'] + ': ' + BTCval['amount'] + '$ ' + BTCval['currency']
-    btcTextToShow = 'BTC: ' + str(BTC_VALUE) + '$ CAD'
-    adaTextToShow = 'ADA: ' + str(ADA_VALUE) + '$ CAD'
-    window['BTC_output'].update(btcTextToShow)   
-    window['ADA_output'].update(adaTextToShow)
+    for curr,text in zip(currencies, textsToShow):
+        print("curr",curr)
+        print("text", text)
+        window[curr + '_output'].update(text)    
 
 def tikCAD2USD():
     url = "https://api.exchangeratesapi.io/latest?base=CAD&symbols=USD"
