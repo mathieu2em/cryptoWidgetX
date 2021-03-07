@@ -12,7 +12,7 @@ def main() :
 
     # All the stuff inside your window.
     layout = [  *[[sg.Text('', size=(22,1), key=curr+'_output' )] for curr in rowsCurrencies],
-                [sg.InputText()],
+                [sg.InputText(size=(22,1))],
                 [sg.Button('add', key='add'), sg.Button('exit')]]
 
     # Create the Window
